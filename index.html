@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Justin Arndt — MSAT Digital and Data Specialist. Regulated AI and data validation engineering for pharmaceutical manufacturing. GxP, GAMP 5, 21 CFR Part 11, SUS CPV, ALCOA+.">
+<title>Justin Arndt | MSAT Data Engineering Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #040d1a;
+    --surface: #0a1628;
+    --surface2: #0f1f36;
+    --border: #1a2f4a;
+    --accent: #3b82f6;
+    --accent2: #06b6d4;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --code: #7dd3fc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; line-height: 1.6; }
+
+  /* Nav */
+  nav { position: sticky; top: 0; z-index: 100; background: rgba(4,13,26,0.9);
+        backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+        padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+  nav .logo { font-weight: 700; font-size: 1.1rem; color: var(--accent); }
+  nav .links { display: flex; gap: 1.5rem; }
+  nav a { color: var(--muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
+  nav a:hover { color: var(--text); }
+
+  /* Hero */
+  .hero { max-width: 900px; margin: 0 auto; padding: 6rem 2rem 4rem; text-align: center; }
+  .hero .badge { display: inline-block; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3);
+                 color: var(--accent); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em;
+                 text-transform: uppercase; padding: 0.3rem 1rem; border-radius: 999px; margin-bottom: 1.5rem; }
+  .hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 700; line-height: 1.15;
+             background: linear-gradient(135deg, #e2e8f0, #3b82f6, #06b6d4);
+             -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 1.5rem; }
+  .hero p { font-size: 1.15rem; color: var(--muted); max-width: 650px; margin: 0 auto 2.5rem; }
+  .hero-links { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+  .btn { padding: 0.75rem 1.75rem; border-radius: 8px; font-weight: 600; font-size: 0.95rem;
+         text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 8px 25px rgba(59,130,246,0.3); }
+  .btn-outline { border: 1px solid var(--border); color: var(--text); background: transparent; }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+
+  /* Reg bar */
+  .reg-bar { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+             padding: 1rem 2rem; display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: center; }
+  .reg-badge { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--code);
+               background: rgba(125,211,252,0.07); padding: 0.3rem 0.75rem; border-radius: 4px; }
+
+  /* Main */
+  main { max-width: 1000px; margin: 0 auto; padding: 4rem 2rem; }
+  section { margin-bottom: 5rem; }
+  .section-label { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+                   color: var(--accent); margin-bottom: 0.75rem; }
+  h2 { font-size: 1.75rem; font-weight: 700; margin-bottom: 1.5rem; }
+
+  /* Featured project */
+  .featured-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+                   padding: 2.5rem; position: relative; overflow: hidden; }
+  .featured-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+                            background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .featured-card .tag { display: inline-block; background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.3);
+                        color: var(--accent2); font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+                        letter-spacing: 0.1em; padding: 0.2rem 0.75rem; border-radius: 999px; margin-bottom: 1rem; }
+  .featured-card h3 { font-size: 1.5rem; margin-bottom: 0.75rem; }
+  .featured-card p { color: var(--muted); margin-bottom: 1.5rem; }
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                  gap: 1rem; margin: 1.5rem 0; }
+  .metric { background: var(--surface2); border-radius: 8px; padding: 1rem; text-align: center; }
+  .metric .value { font-size: 1.5rem; font-weight: 700; color: var(--accent); font-family: 'JetBrains Mono', monospace; }
+  .metric .label { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
+  .card-links { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; }
+  .reg-stack { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
+  .reg-pill { font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 4px; border: 1px solid var(--border); color: var(--muted); }
+
+  /* Demo cards */
+  .demo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+  .demo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+               padding: 1.75rem; transition: all 0.2s; text-decoration: none; color: var(--text); display: block; }
+  .demo-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,0.3); }
+  .demo-card .icon { font-size: 2rem; margin-bottom: 1rem; }
+  .demo-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .demo-card p { font-size: 0.875rem; color: var(--muted); }
+  .demo-card .demo-tag { font-size: 0.7rem; color: var(--accent); font-weight: 600; margin-top: 1rem;
+                         display: inline-flex; align-items: center; gap: 0.3rem; }
+
+  /* Alert example */
+  .alert-demo { background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.2);
+                border-radius: 8px; padding: 1rem 1.25rem; font-family: 'JetBrains Mono', monospace;
+                font-size: 0.8rem; margin: 1.5rem 0; }
+  .alert-demo .alert-header { color: var(--red); font-weight: 700; margin-bottom: 0.5rem; }
+  .alert-demo .alert-body { color: var(--muted); line-height: 1.8; }
+  .alert-demo span { color: var(--code); }
+
+  /* About */
+  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+  @media (max-width: 640px) { .about-grid { grid-template-columns: 1fr; } }
+  .skill-group h4 { font-size: 0.85rem; font-weight: 600; color: var(--accent); margin-bottom: 0.75rem; }
+  .skill-list { list-style: none; }
+  .skill-list li { font-size: 0.875rem; color: var(--muted); padding: 0.25rem 0;
+                   border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
+  .skill-list li::before { content: '→'; color: var(--accent); font-size: 0.75rem; }
+
+  /* Footer */
+  footer { border-top: 1px solid var(--border); padding: 2rem; text-align: center; color: var(--muted); font-size: 0.85rem; }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">J. Arndt</div>
+  <div class="links">
+    <a href="#sentinel">CPV Sentinel</a>
+    <a href="#demos">Demos</a>
+    <a href="#about">About</a>
+    <a href="https://github.com/j-arndt" target="_blank">GitHub ↗</a>
+    <a href="https://linkedin.com/in/justinarndt" target="_blank">LinkedIn ↗</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="badge">MSAT Digital &amp; Data Engineering</div>
+  <h1>Regulated AI &amp; Data Validation for Pharmaceutical Manufacturing</h1>
+  <p>Building GxP-compliant analytical platforms that close the gap between SUS process data, Stage 3 CPV requirements, and regulatory audit readiness.</p>
+  <div class="hero-links">
+    <a href="#sentinel" class="btn btn-primary">↓ Featured Project</a>
+    <a href="https://github.com/j-arndt" target="_blank" class="btn btn-outline">GitHub Profile ↗</a>
+    <a href="https://linkedin.com/in/justinarndt" target="_blank" class="btn btn-outline">LinkedIn ↗</a>
+  </div>
+</div>
+
+<div class="reg-bar">
+  <span class="reg-badge">21 CFR Part 11</span>
+  <span class="reg-badge">GAMP 5 Cat 4</span>
+  <span class="reg-badge">ALCOA+</span>
+  <span class="reg-badge">USP &lt;665&gt; May 2026</span>
+  <span class="reg-badge">ASTM E3051-25</span>
+  <span class="reg-badge">PDA TR 66</span>
+  <span class="reg-badge">ICH Q9(R1)</span>
+  <span class="reg-badge">FDA PV 2011 Stage 3</span>
+</div>
+
+<main>
+
+  <!-- Featured -->
+  <section id="sentinel">
+    <div class="section-label">Featured Project</div>
+    <h2>SUS CPV Sentinel</h2>
+
+    <div class="featured-card">
+      <div class="tag">⚗️ Live · GAMP 5 Category 4 · Fully Validated</div>
+      <h3>Stage 3 Continued Process Verification for Single-Use Systems</h3>
+      <p>
+        USP &lt;665&gt; became enforceable <strong>1 May 2026</strong>. End users now bear regulatory responsibility for
+        assessing Process Equipment-Related Leachables across their full plastic manufacturing train.
+        ASTM E3051-25 (January 2025) requires digital data management for SUS qualification and continued verification.
+        This tool operationalizes both requirements as a validated Python/Streamlit platform.
+      </p>
+
+      <div class="alert-demo">
+        <div class="alert-header">🚨 SCN_THRESHOLD_EXCEEDED — Cytiva</div>
+        <div class="alert-body">
+          Metric: Rolling 12-month SCN impact score = <span>4.0</span> (threshold ≤ 3)<br>
+          SCN Reference: <span>SCN-CYT-2025-0114</span> · Film resin change · Q4 2025<br>
+          Rule: <span>ASTM E3051-25 §6 / PDA TR 66 §9</span><br>
+          Audit entry: <span>a3f8c2d1e5b7... → prev: 7e4b91a0c3d2...</span>
+        </div>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric"><div class="value">150</div><div class="label">Lots analysed</div></div>
+        <div class="metric"><div class="value">51</div><div class="label">URS requirements</div></div>
+        <div class="metric"><div class="value">39/39</div><div class="label">Test cases passed</div></div>
+        <div class="metric"><div class="value">0</div><div class="label">Deviations</div></div>
+        <div class="metric"><div class="value">47</div><div class="label">Audit entries (PQ)</div></div>
+        <div class="metric"><div class="value">&lt;3</div><div class="label">Lots to SCN detect</div></div>
+      </div>
+
+      <div class="reg-stack">
+        <span class="reg-pill">FDA PV 2011 Stage 3</span>
+        <span class="reg-pill">ASTM E3051-25</span>
+        <span class="reg-pill">PDA TR 66</span>
+        <span class="reg-pill">USP &lt;665&gt;</span>
+        <span class="reg-pill">21 CFR Part 11</span>
+        <span class="reg-pill">GAMP 5 Cat 4</span>
+        <span class="reg-pill">ICH Q9(R1)</span>
+        <span class="reg-pill">ALCOA+</span>
+        <span class="reg-pill">Kneat Gx</span>
+        <span class="reg-pill">Veeva Vault QualityDocs</span>
+      </div>
+
+      <p style="font-size:0.85rem; color:var(--muted);">
+        <strong style="color:var(--text);">Validation Package:</strong>
+        VP · URS (51 req) · Risk Assessment (FMEA) · IQ Protocol · OQ Protocol (13 cases) · PQ Protocol (6 cases) · RTM (100% coverage) · Validation Summary Report
+      </p>
+
+      <div class="card-links">
+        <a href="https://github.com/j-arndt/sus-cpv-sentinel" target="_blank" class="btn btn-primary">View on GitHub ↗</a>
+        <a href="https://github.com/j-arndt/sus-cpv-sentinel/tree/main/docs" target="_blank" class="btn btn-outline">Validation Docs ↗</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Demos -->
+  <section id="demos">
+    <div class="section-label">Interactive Demos</div>
+    <h2>GxP Dashboard Prototypes</h2>
+    <div class="demo-grid">
+
+      <a href="qms-insights/" class="demo-card" id="demo-qms">
+        <div class="icon">📊</div>
+        <h3>QMS Insights Dashboard</h3>
+        <p>Computerized system health monitoring across the validated instrument fleet. CAPA tracking, audit trail review status, periodic review scheduling.</p>
+        <div class="demo-tag">↗ Open Demo</div>
+      </a>
+
+      <a href="audit-sentinel/" class="demo-card" id="demo-audit">
+        <div class="icon">🔒</div>
+        <h3>Audit Trail Sentinel</h3>
+        <p>ALCOA+ data integrity scanner for GxP systems. Detects audit trail gaps, missing reason-for-change fields, and timestamp anomalies across 21 CFR Part 11 systems.</p>
+        <div class="demo-tag">↗ Open Demo</div>
+      </a>
+
+      <a href="sus-monitor/" class="demo-card" id="demo-sus">
+        <div class="icon">⚗️</div>
+        <h3>SUS Lot Genealogy Monitor</h3>
+        <p>CPV Bridge for single-use systems. Lot genealogy traceability, pressure-decay trending, supplier change notification tracking aligned to ASTM E3051-25.</p>
+        <div class="demo-tag">↗ Open Demo</div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- About -->
+  <section id="about">
+    <div class="section-label">Background</div>
+    <h2>Justin Arndt</h2>
+    <p style="color:var(--muted); margin-bottom:2rem; max-width:600px;">
+      Regulated AI and data validation engineer with hands-on GxP experience at pharmaceutical manufacturing sites.
+      Focused on the intersection of modern data engineering and life sciences compliance.
+    </p>
+    <div class="about-grid">
+      <div class="skill-group">
+        <h4>Validation &amp; Compliance</h4>
+        <ul class="skill-list">
+          <li>GAMP 5 IQ/OQ/PQ lifecycle</li>
+          <li>21 CFR Part 11 / ALCOA+</li>
+          <li>Kneat Gx execution</li>
+          <li>Veeva Vault QualityDocs</li>
+          <li>FDA Process Validation Stage 3</li>
+          <li>Change control &amp; risk assessment</li>
+        </ul>
+      </div>
+      <div class="skill-group">
+        <h4>Data &amp; Analytics</h4>
+        <ul class="skill-list">
+          <li>Python · pandas · scipy · numpy</li>
+          <li>Statistical Process Control (SPC)</li>
+          <li>Cpk/Ppk · Shewhart · Hotelling T²</li>
+          <li>Streamlit · Plotly dashboards</li>
+          <li>LIMS integration · SQL</li>
+          <li>AI/ML in GxP contexts</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>Justin Arndt · MSAT Data Engineering · <a href="https://github.com/j-arndt">github.com/j-arndt</a> · <a href="https://linkedin.com/in/justinarndt">LinkedIn</a></p>
+  <p style="margin-top:0.5rem; font-size:0.75rem;">
+    Validation executed in Kneat Gx · Document control in Veeva Vault QualityDocs · GAMP 5 Category 4
+  </p>
+</footer>
+
+</body>
+</html>

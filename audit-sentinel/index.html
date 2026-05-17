@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AuditTrail Sentinel — ALCOA+ Data-Integrity Scanner · Justin Arndt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F2EE;
+    --card:#FFFFFF;
+    --ink:#0F1A2E;
+    --ink-soft:#2C3A52;
+    --ink-mid:#4A5870;
+    --ink-muted:#7A8597;
+    --rule:#E0DCD2;
+    --rule-soft:#EDEAE0;
+    --teal:#1B4D5A;
+    --teal-soft:#2E6F7F;
+    --teal-bg:#E8EFF1;
+    --sienna:#B2402F;
+    --sienna-deep:#7A2A1C;
+    --sienna-bg:#F7E6E1;
+    --mustard:#C8941F;
+    --mustard-bg:#F6EDD2;
+    --green:#3E7A4E;
+    --green-soft:#5A9968;
+    --green-bg:#E3EDE5;
+    --red:#B92F2F;
+    --red-bg:#F7E0E0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter', system-ui, sans-serif;
+    font-size:13px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* BRAND BAR */
+  .brand-bar{
+    background:var(--ink);
+    color:#FCFBF8;
+    padding:14px 28px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:24px;
+    border-bottom:3px solid var(--sienna);
+  }
+  .brand-left{display:flex;align-items:center;gap:14px}
+  .brand-logo{
+    width:30px;height:30px;
+    background:linear-gradient(135deg, var(--sienna) 0%, var(--mustard) 100%);
+    border-radius:5px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Fraunces',serif;font-size:18px;font-weight:600;
+    color:#FCFBF8;
+  }
+  .brand-title{
+    font-family:'Fraunces',serif;
+    font-size:18px;
+    font-weight:500;
+    letter-spacing:-0.005em;
+  }
+  .brand-title em{font-style:italic;color:#D4A82C}
+  .brand-meta{
+    font-size:11px;
+    color:#9AC4D0;
+    margin-top:1px;
+  }
+  .brand-right{
+    display:flex;align-items:center;gap:18px;
+    font-size:11px;color:#9AC4D0;
+  }
+  .brand-right a{
+    color:#9AC4D0;
+    text-decoration:none;
+    padding:5px 10px;
+    border:1px solid #2C3A52;
+    border-radius:3px;
+    transition:all 0.15s;
+  }
+  .brand-right a:hover{border-color:#D4A82C;color:#D4A82C}
+
+  /* RUN BAR */
+  .run-bar{
+    background:var(--card);
+    border-bottom:1px solid var(--rule);
+    padding:14px 28px;
+    display:flex;
+    align-items:center;
+    gap:32px;
+    flex-wrap:wrap;
+  }
+  .stat{display:flex;flex-direction:column;gap:1px}
+  .stat-label{
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--ink-muted);
+  }
+  .stat-value{
+    font-family:'Fraunces',serif;
+    font-size:22px;
+    font-weight:500;
+    color:var(--ink);
+    letter-spacing:-0.01em;
+    font-variant-numeric:tabular-nums;
+  }
+  .stat-value.crit{color:var(--sienna)}
+  .stat-value.warn{color:var(--mustard)}
+  .stat-value.muted{color:var(--ink-mid)}
+  .stat-value.mono{font-family:'JetBrains Mono',monospace;font-size:18px}
+  .stat-sub{font-size:10px;color:var(--ink-muted);margin-top:2px;font-family:'JetBrains Mono',monospace}
+  .run-spacer{flex:1}
+  .run-btn{
+    background:var(--ink);
+    color:#FCFBF8;
+    border:none;
+    padding:9px 18px;
+    border-radius:4px;
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+    letter-spacing:0.02em;
+    transition:all 0.15s;
+  }
+  .run-btn:hover{background:var(--sienna)}
+  .run-btn:disabled{opacity:0.5;cursor:not-allowed}
+
+  /* CONTAINER */
+  .container{
+    padding:20px 28px 40px;
+    max-width:1480px;
+    margin:0 auto;
+  }
+
+  /* SECTION HEADER */
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:24px;
+    margin:0 0 14px;
+  }
+  .section-head h2{
+    font-family:'Fraunces',serif;
+    font-size:22px;
+    font-weight:500;
+    color:var(--ink);
+    letter-spacing:-0.01em;
+  }
+  .section-head .section-meta{
+    font-size:11.5px;
+    color:var(--ink-muted);
+  }
+
+  /* RULE PACK GRID */
+  .rule-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:12px;
+    margin-bottom:32px;
+  }
+  .rule-card{
+    background:var(--card);
+    border:1px solid var(--rule);
+    border-radius:6px;
+    padding:14px 16px;
+    cursor:pointer;
+    transition:all 0.15s;
+    position:relative;
+  }
+  .rule-card:hover{
+    border-color:var(--ink-soft);
+    transform:translateY(-1px);
+    box-shadow:0 4px 8px rgba(15,26,46,0.08);
+  }
+  .rule-card.active{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink)}
+  .rule-card .rule-id{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    font-weight:600;
+    color:var(--teal);
+    letter-spacing:0.04em;
+    margin-bottom:3px;
+  }
+  .rule-card .rule-name{
+    font-family:'Fraunces',serif;
+    font-size:15px;
+    font-weight:500;
+    color:var(--ink);
+    line-height:1.2;
+    margin-bottom:8px;
+  }
+  .rule-card .alcoa-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    margin-bottom:10px;
+  }
+  .alcoa-pill{
+    display:inline-block;
+    font-size:9px;
+    font-weight:700;
+    letter-spacing:0.04em;
+    padding:2px 7px;
+    border-radius:9px;
+    background:var(--teal-bg);
+    color:var(--teal);
+    text-transform:uppercase;
+  }
+  .rule-card .rule-stats{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding-top:8px;
+    border-top:1px solid var(--rule-soft);
+    font-size:11px;
+    color:var(--ink-mid);
+  }
+  .findings-count{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:600;
+    font-size:14px;
+    color:var(--ink);
+  }
+  .findings-count.zero{color:var(--green)}
+  .findings-count.warn{color:var(--mustard)}
+  .findings-count.crit{color:var(--sienna)}
+
+  /* SEVERITY BADGES */
+  .badge{
+    display:inline-block;
+    font-size:9.5px;
+    font-weight:700;
+    letter-spacing:0.08em;
+    padding:3px 8px;
+    border-radius:3px;
+    text-transform:uppercase;
+  }
+  .badge.crit{background:var(--sienna);color:#FCFBF8}
+  .badge.major{background:var(--mustard);color:#FCFBF8}
+  .badge.minor{background:var(--teal);color:#FCFBF8}
+  .badge.info{background:var(--ink-mid);color:#FCFBF8}
+
+  /* FILTER ROW */
+  .filter-row{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .filter-row .filter-label{
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--ink-muted);
+  }
+  .chip{
+    font-family:'Inter',sans-serif;
+    font-size:11px;
+    font-weight:500;
+    padding:5px 10px;
+    border-radius:3px;
+    border:1px solid var(--rule);
+    background:var(--card);
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:all 0.12s;
+    white-space:nowrap;
+  }
+  .chip:hover{border-color:var(--teal);color:var(--teal)}
+  .chip.active{
+    background:var(--ink);
+    color:#FCFBF8;
+    border-color:var(--ink);
+  }
+  .chip .count{
+    margin-left:6px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    opacity:0.75;
+  }
+  .filter-spacer{flex:1}
+  .clear-filters{
+    font-size:11px;
+    color:var(--ink-mid);
+    cursor:pointer;
+    text-decoration:underline;
+    text-underline-offset:3px;
+  }
+  .clear-filters:hover{color:var(--sienna)}
+
+  /* FINDINGS LIST */
+  .findings-list{display:flex;flex-direction:column;gap:12px}
+  .finding{
+    background:var(--card);
+    border:1px solid var(--rule);
+    border-radius:6px;
+    overflow:hidden;
+    border-left-width:4px;
+  }
+  .finding.crit{border-left-color:var(--sienna)}
+  .finding.major{border-left-color:var(--mustard)}
+  .finding.minor{border-left-color:var(--teal)}
+  .finding-head{
+    padding:12px 18px;
+    background:var(--card);
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .finding-id{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    font-weight:600;
+    color:var(--teal);
+    letter-spacing:0.04em;
+  }
+  .finding-rule{
+    font-family:'Fraunces',serif;
+    font-size:15px;
+    font-weight:500;
+    color:var(--ink);
+    flex:1;
+  }
+  .finding-meta{
+    font-size:11px;
+    color:var(--ink-muted);
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .finding-meta .meta-label{color:var(--ink-muted)}
+  .finding-meta .meta-value{color:var(--ink);font-weight:500}
+  .finding-body{
+    padding:0 18px 16px;
+    border-top:1px solid var(--rule-soft);
+    padding-top:12px;
+  }
+  .finding-body .description{
+    font-size:12.5px;
+    line-height:1.55;
+    color:var(--ink-soft);
+    margin-bottom:10px;
+  }
+  .finding-body .description code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;
+    background:var(--bg);
+    color:var(--teal);
+    padding:1px 5px;
+    border-radius:2px;
+  }
+  .evidence{
+    background:#FAFAF8;
+    border:1px solid var(--rule-soft);
+    border-radius:4px;
+    padding:10px 12px;
+    margin-bottom:10px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    color:var(--ink-soft);
+    overflow-x:auto;
+  }
+  .evidence-line{display:flex;gap:12px;padding:2px 0}
+  .evidence-line .ts{color:var(--ink-muted);min-width:140px}
+  .evidence-line .act{color:var(--sienna);font-weight:600;min-width:60px}
+  .evidence-line .user{color:var(--teal);min-width:80px}
+  .evidence-line .ip{color:var(--mustard);min-width:120px}
+  .evidence-line .ref{color:var(--ink-mid);min-width:90px}
+
+  .why-row, .rem-row{
+    display:flex;
+    gap:14px;
+    margin-bottom:8px;
+    font-size:11.5px;
+    line-height:1.5;
+  }
+  .why-row .label, .rem-row .label{
+    font-size:9.5px;
+    font-weight:700;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--sienna);
+    min-width:88px;
+    padding-top:1px;
+  }
+  .rem-row .label{color:var(--green)}
+  .why-row .content, .rem-row .content{
+    flex:1;
+    color:var(--ink-soft);
+  }
+  .why-row .content strong, .rem-row .content strong{color:var(--ink)}
+  .citation{
+    display:inline-block;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    color:var(--ink-muted);
+    background:var(--bg);
+    padding:1px 6px;
+    border-radius:2px;
+    margin-left:4px;
+  }
+  .action-row{
+    margin-top:10px;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .action-row button{
+    font-family:'Inter',sans-serif;
+    font-size:11px;
+    font-weight:500;
+    padding:5px 11px;
+    border-radius:3px;
+    border:1px solid var(--rule);
+    background:var(--card);
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:all 0.12s;
+  }
+  .action-row button:hover{border-color:var(--teal);color:var(--teal)}
+  .action-row button.primary{
+    background:var(--ink);
+    color:#FCFBF8;
+    border-color:var(--ink);
+  }
+  .action-row button.primary:hover{background:var(--sienna);border-color:var(--sienna)}
+
+  /* RAW AUDIT TRAIL */
+  .raw-section{
+    background:var(--card);
+    border:1px solid var(--rule);
+    border-radius:6px;
+    overflow:hidden;
+    margin-top:32px;
+  }
+  .raw-section summary{
+    padding:14px 18px;
+    cursor:pointer;
+    font-family:'Fraunces',serif;
+    font-size:16px;
+    font-weight:500;
+    color:var(--ink);
+    list-style:none;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .raw-section summary::-webkit-details-marker{display:none}
+  .raw-section summary::after{
+    content:'▾';
+    font-size:14px;
+    color:var(--ink-muted);
+    transition:transform 0.2s;
+  }
+  .raw-section[open] summary::after{transform:rotate(180deg)}
+  .raw-section summary:hover{background:var(--bg)}
+  .raw-section .raw-content{
+    padding:0 18px 18px;
+    max-height:480px;
+    overflow:auto;
+  }
+  .raw-table{
+    width:100%;
+    border-collapse:collapse;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+  }
+  .raw-table th{
+    text-align:left;
+    padding:8px 10px;
+    background:var(--bg);
+    border-bottom:1px solid var(--rule);
+    color:var(--ink-muted);
+    font-size:9.5px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    font-family:'Inter',sans-serif;
+    position:sticky;top:0;
+  }
+  .raw-table td{
+    padding:6px 10px;
+    border-bottom:1px solid var(--rule-soft);
+    color:var(--ink-soft);
+    white-space:nowrap;
+  }
+  .raw-table tr:hover td{background:var(--bg)}
+  .raw-table .ridcol{color:var(--teal);font-weight:600}
+  .raw-table .act-create{color:var(--green-soft);font-weight:600}
+  .raw-table .act-modify{color:var(--mustard);font-weight:600}
+  .raw-table .act-delete{color:var(--sienna);font-weight:600}
+  .raw-table .act-login,.raw-table .act-logout{color:var(--ink-muted)}
+  .raw-table .act-view{color:var(--ink-mid)}
+  .raw-table .flagged{background:var(--sienna-bg)}
+  .raw-table .flagged:hover td{background:var(--sienna-bg)}
+
+  /* METHODOLOGY */
+  .methodology{
+    background:var(--card);
+    border-radius:6px;
+    padding:24px 28px;
+    margin-top:32px;
+    border:1px solid var(--rule);
+  }
+  .methodology h2{
+    font-family:'Fraunces',serif;
+    font-size:22px;
+    font-weight:500;
+    color:var(--ink);
+    margin-bottom:16px;
+    letter-spacing:-0.01em;
+  }
+  .methodology h3{
+    font-size:10.5px;
+    font-weight:700;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--sienna);
+    margin:20px 0 10px;
+  }
+  .methodology p{
+    font-size:12.5px;
+    line-height:1.6;
+    color:var(--ink-soft);
+    margin-bottom:8px;
+    max-width:880px;
+  }
+  .methodology code{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;
+    background:var(--bg);
+    color:var(--teal);
+    padding:1px 5px;
+    border-radius:2px;
+  }
+  .alcoa-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:11.5px;
+    margin-top:8px;
+    margin-bottom:10px;
+    max-width:880px;
+  }
+  .alcoa-table th{
+    text-align:left;
+    padding:8px 12px;
+    background:var(--bg);
+    border-bottom:1px solid var(--rule);
+    color:var(--ink-muted);
+    font-size:10px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+  }
+  .alcoa-table td{
+    padding:7px 12px;
+    border-bottom:1px solid var(--rule-soft);
+    color:var(--ink-soft);
+  }
+  .alcoa-table td:first-child{font-family:'JetBrains Mono',monospace;color:var(--teal);font-weight:600;font-size:10.5px;width:80px}
+  .alcoa-table td strong{color:var(--ink)}
+
+  /* FOOTER */
+  footer.dash-footer{
+    text-align:center;
+    padding:32px 28px;
+    color:var(--ink-muted);
+    font-size:11px;
+  }
+  footer.dash-footer strong{color:var(--ink)}
+  footer.dash-footer a{color:var(--teal);text-decoration:none;font-weight:600}
+  footer.dash-footer a:hover{text-decoration:underline}
+
+  /* EMPTY STATE */
+  .empty{
+    text-align:center;
+    padding:48px 24px;
+    color:var(--ink-muted);
+    background:var(--card);
+    border:1px dashed var(--rule);
+    border-radius:6px;
+  }
+  .empty .emp-icon{font-size:42px;color:var(--green-soft);margin-bottom:8px}
+  .empty h4{font-family:'Fraunces',serif;font-size:18px;color:var(--ink);margin-bottom:4px}
+
+  /* RESPONSIVE */
+  @media (max-width: 1100px){
+    .rule-grid{grid-template-columns:repeat(2, 1fr)}
+  }
+  @media (max-width: 700px){
+    .rule-grid{grid-template-columns:1fr}
+    .container{padding:14px 14px 32px}
+    .brand-bar, .run-bar{padding:12px 16px}
+  }
+</style>
+<style>
+.ha-img-placeholder{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;background:#f4f4f5;border:1px dashed #d4d4d8;border-radius:8px;color:#71717a;font-size:12px;font-family:system-ui,sans-serif;min-height:80px;padding:16px;box-sizing:border-box;animation:ha-img-pulse 1.5s ease-in-out infinite}
+.ha-img-placeholder.ha-failed{animation:none;opacity:.7}
+@keyframes ha-img-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@media(prefers-color-scheme:dark){.ha-img-placeholder{background:#27272a;border-color:#3f3f46;color:#a1a1aa}}
+</style>
+</head>
+<body>
+
+<!-- BRAND BAR -->
+<header class="brand-bar">
+  <div class="brand-left">
+    <div class="brand-logo">A</div>
+    <div>
+      <div class="brand-title">AuditTrail Sentinel <em>·</em> ALCOA+ Data-Integrity Scanner</div>
+      <div class="brand-meta">9 rule packs · MHRA 2018 GxP DI Guidance aligned · Portfolio piece by Justin Arndt</div>
+    </div>
+  </div>
+  <div class="brand-right">
+    <a href="https://github.com/j-arndt" target="_blank" rel="noopener">github.com/j-arndt</a>
+  </div>
+</header>
+
+<!-- RUN BAR -->
+<div class="run-bar">
+  <div class="stat">
+    <span class="stat-label">Records Scanned</span>
+    <span class="stat-value mono" id="stat-records">—</span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">Systems</span>
+    <span class="stat-value mono" id="stat-systems">—</span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">Findings</span>
+    <span class="stat-value crit" id="stat-findings">—</span>
+    <span class="stat-sub" id="stat-sev-breakdown"></span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">Scan Duration</span>
+    <span class="stat-value mono muted" id="stat-duration">—</span>
+  </div>
+  <div class="run-spacer"></div>
+  <button class="run-btn" id="rerun-btn">↻ Re-run scan</button>
+</div>
+
+<!-- CONTAINER -->
+<div class="container">
+
+  <!-- RULE PACK GRID -->
+  <div class="section-head">
+    <h2>Rule packs · 9 active</h2>
+    <span class="section-meta">Click any pack to filter findings · Hover for ALCOA+ attribute mapping</span>
+  </div>
+  <div class="rule-grid" id="rule-grid"></div>
+
+  <!-- FINDINGS SECTION -->
+  <div class="section-head">
+    <h2 id="findings-title">Findings</h2>
+    <span class="section-meta" id="findings-meta"></span>
+  </div>
+
+  <div class="filter-row">
+    <span class="filter-label">Severity</span>
+    <button class="chip active" data-filter="severity" data-value="all">All</button>
+    <button class="chip" data-filter="severity" data-value="crit">Critical</button>
+    <button class="chip" data-filter="severity" data-value="major">Major</button>
+    <button class="chip" data-filter="severity" data-value="minor">Minor</button>
+    <span class="filter-label" style="margin-left:18px">System</span>
+    <div id="system-filter-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    <div class="filter-spacer"></div>
+    <span class="clear-filters" id="clear-filters">Clear filters</span>
+  </div>
+
+  <div class="findings-list" id="findings-list"></div>
+
+  <!-- RAW AUDIT TRAIL PREVIEW -->
+  <details class="raw-section">
+    <summary>Raw audit-trail sample — first 80 records (of <span id="raw-total">—</span> scanned)</summary>
+    <div class="raw-content">
+      <table class="raw-table" id="raw-table">
+        <thead>
+          <tr>
+            <th>Record</th>
+            <th>Timestamp</th>
+            <th>System</th>
+            <th>User</th>
+            <th>Role</th>
+            <th>Action</th>
+            <th>Entity</th>
+            <th>Field</th>
+            <th>Reason</th>
+            <th>IP / Host</th>
+            <th>Batch</th>
+          </tr>
+        </thead>
+        <tbody id="raw-tbody"></tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- METHODOLOGY -->
+  <div class="methodology">
+    <h2>Methodology · How AuditTrail Sentinel works</h2>
+    <p><strong>The premise.</strong> Across the last decade of FDA warning letters and 483 observations, the data-integrity findings cited most often — shared logins, after-hours edits without reason, deletion-after-creation patterns, post-batch edits, audit-trail discontinuity, vague or missing reasons for change — are <em>all</em> mechanically detectable from audit-trail exports. Most sites don't look. AuditTrail Sentinel looks.</p>
+
+    <h3>Architecture</h3>
+    <p>Pure Python, ~1,400 LOC, fully unit-tested. <code>pandas</code> for tabular work, <code>lxml</code> for XML audit-trail exports, <code>regex</code> for pattern detection inside reason-for-change strings, <code>SQLite</code> for inter-rule queries and finding persistence. CLI for batch runs (cron-able), Streamlit front-end for QA review. Designed and documented to run as a controlled, validated utility under <strong>GAMP 5 Category 5</strong> with versioned URS, IQ/OQ/PQ, and audit trail of its own findings.</p>
+
+    <h3>Ingestion layer</h3>
+    <p>Plugins for each system family — LIMS (LabWare, SampleManager), CDS (Empower, Chromeleon), MES (Werum PAS-X, Aspen PEM), instrument-resident logs (LabX, KQCL, FTIR vendor logs). Each plugin maps the system's native audit-trail schema to a normalized internal record: <code>record_id · sequence_num · timestamp · system · user_id · user_role · action · entity_type · entity_id · field · old_value · new_value · reason_for_change · ip_address · hostname · session_id · batch_id · batch_status</code>.</p>
+
+    <h3>Rule pack architecture</h3>
+    <p>Each rule is a separate Python module with a documented detection function, a unit-test suite, configurable thresholds, and a fixed severity weight. The orchestrator runs all enabled rules sequentially against the SQLite store, persists findings with cross-references to the source records, and emits a JSON manifest plus a human-readable report. Rule weights are configurable per site so each deployment can tune sensitivity without touching code.</p>
+
+    <h3>ALCOA+ attribute mapping</h3>
+    <table class="alcoa-table">
+      <thead><tr><th>Rule</th><th>Name</th><th>Primary ALCOA+ attributes</th><th>MHRA 2018 citation</th></tr></thead>
+      <tbody>
+        <tr><td>R-001</td><td><strong>Shared Account Detection</strong></td><td>Attributable</td><td>§6.2 · Access control</td></tr>
+        <tr><td>R-002</td><td><strong>Unauthorized Privilege Escalation</strong></td><td>Attributable · Accurate</td><td>§6.3 · User access management</td></tr>
+        <tr><td>R-003</td><td><strong>Abnormal Time-Stamp Clustering</strong></td><td>Contemporaneous · Accurate</td><td>§6.6 · Data review</td></tr>
+        <tr><td>R-004</td><td><strong>Deletion-After-Creation</strong></td><td>Original · Enduring</td><td>§6.16 · Data lifecycle</td></tr>
+        <tr><td>R-005</td><td><strong>Sequence Gap Detection</strong></td><td>Complete</td><td>§3.5 · Audit trail completeness</td></tr>
+        <tr><td>R-006</td><td><strong>Post-Batch Edit</strong></td><td>Contemporaneous · Enduring</td><td>§6.6 · Contemporaneous record</td></tr>
+        <tr><td>R-007</td><td><strong>After-Hours Edit Pattern</strong></td><td>Contemporaneous · Attributable</td><td>§6.6 · Data review timing</td></tr>
+        <tr><td>R-008</td><td><strong>Audit Trail Gap (System-Wide)</strong></td><td>Complete · Enduring</td><td>§3.5 · Audit trail continuity</td></tr>
+        <tr><td>R-009</td><td><strong>Original Record Modification</strong></td><td>Original · Accurate</td><td>§6.16 · Reason for change</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Synthetic data disclosure</h3>
+    <p>All records, users, IPs, hostnames, and findings shown above are <strong>fabricated for portfolio demonstration purposes</strong>. The dataset is generated client-side from a seeded random process designed to plant a known number of violations across each rule pack so the demo produces verifiable, repeatable results. No real GxP audit-trail data is present anywhere in this artifact.</p>
+
+    <h3>What would go in version 2</h3>
+    <p>Multivariate scoring (instead of per-rule independent weights), an ML-based anomaly layer trained on per-site baselines, automatic ticket creation into the QMS via API, and a Power BI back-end so QA can trend findings the same way they trend deviations. The path is clear; the rule layer comes first because it's deterministic and inspector-explainable.</p>
+
+  </div>
+
+</div>
+
+<footer class="dash-footer">
+  <p>Built by <strong>Justin Arndt</strong> — <a href="https://www.linkedin.com/in/qualityai/" target="_blank" rel="noopener">linkedin.com/in/qualityai</a> · <a href="https://github.com/j-arndt" target="_blank" rel="noopener">github.com/j-arndt</a></p>
+  <p style="margin-top:8px">Portfolio piece for the MSAT Digital and Data Specialist application · GSK Marietta · Req 439792 · Synthetic data only</p>
+</footer>
+
+<script>
+// ============================================================
+// SEEDED RNG
+// ============================================================
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = seed;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+let SEED_VALUE = 137;
+let rng = mulberry32(SEED_VALUE);
+function reseed(){
+  SEED_VALUE = Math.floor(Math.random()*9999);
+  rng = mulberry32(SEED_VALUE);
+}
+function pick(arr){return arr[Math.floor(rng()*arr.length)]}
+
+// ============================================================
+// DOMAIN MODEL
+// ============================================================
+const SYSTEMS = [
+  {id:'QC-LIMS-001',  name:'LabWare LIMS — QC'},
+  {id:'QC-CDS-001',   name:'Empower CDS'},
+  {id:'QC-TOC-001',   name:'Sievers M9 TOC #1'},
+  {id:'QC-MTOF-001',  name:'Bruker MALDI-ToF'},
+  {id:'QC-LABX-001',  name:'Mettler LabX Server'},
+  {id:'QC-KQCL-001',  name:'Endosafe nexgen-PTS'},
+  {id:'QC-MES-001',   name:'Werum PAS-X (QC ops)'},
+  {id:'QC-FTIR-001',  name:'Bruker Alpha FTIR'},
+];
+
+const USERS = [
+  {id:'m.chen',   role:'QC Analyst',  fullName:'Min Chen'},
+  {id:'r.patel',  role:'QC Analyst',  fullName:'Rohan Patel'},
+  {id:'d.nguyen', role:'QC Analyst',  fullName:'Dao Nguyen'},
+  {id:'s.walsh',  role:'QC Lead',     fullName:'Sara Walsh'},
+  {id:'l.bauer',  role:'QC Analyst',  fullName:'Lena Bauer'},
+  {id:'a.johnson',role:'QC Analyst',  fullName:'Adriana Johnson'},
+  {id:'p.reyes',  role:'QC Lead',     fullName:'Pablo Reyes'},
+  {id:'t.jenkins',role:'QA Reviewer', fullName:'Tomás Jenkins'},
+  {id:'k.osei',   role:'QA Reviewer', fullName:'Kwame Osei'},
+  {id:'j.arndt',  role:'CSV Admin',   fullName:'Justin Arndt'},
+  {id:'svc-lims', role:'Service Acct',fullName:'LIMS Service Account'},
+  {id:'svc-mes',  role:'Service Acct',fullName:'MES Service Account'},
+];
+
+const ENTITIES = [
+  {type:'SAMPLE_RESULT',   fields:['Endotoxin (EU/mL)','TOC (ppb)','Karl Fischer (% H2O)','Particle Count','pH']},
+  {type:'METHOD',          fields:['Method Parameter','Acceptance Criterion','Sample Prep']},
+  {type:'BATCH_RECORD',    fields:['Step Completion','Material Lot','In-Process Result']},
+  {type:'USER',            fields:['Role','Access Level','Active Status']},
+  {type:'CALIBRATION',     fields:['Calibration Value','Calibration Date','Reference Standard']},
+];
+
+const REASONS_VALID = [
+  'Typo correction per LSOP-QC-148',
+  'Per QC supervisor approval — see CR-2026-0214',
+  'Re-test result confirmed — original transcription error',
+  'Adjusted per method validation MV-2025-039',
+  'Per investigation INV-2026-0102',
+  'Pursuant to deviation DEV-2026-0411',
+  'Approved retest result',
+  'Per change control CCR-2026-0287',
+];
+
+const REASONS_VAGUE_OR_EMPTY = ['', 'update', 'fix', 'correction', 'edit', 'adjustment', '-', 'see notes'];
+
+const IPs_PRIMARY = ['10.42.18.92','10.42.18.93','10.42.18.94','10.42.21.07','10.42.21.08','10.42.31.07','10.42.31.08','10.42.42.11'];
+const HOSTS = ['QC-WS-103','QC-WS-104','QC-WS-105','QC-LIMS-CL01','QC-LIMS-CL02','QC-MTOF-WS','QC-LAB-LAPTOP-01','QC-LAB-LAPTOP-02'];
+
+// Permission matrix — who can modify what
+const PERMISSIONS = {
+  'QC Analyst':   ['SAMPLE_RESULT','CALIBRATION'],
+  'QC Lead':      ['SAMPLE_RESULT','METHOD','CALIBRATION'],
+  'QA Reviewer':  ['SAMPLE_RESULT','METHOD','BATCH_RECORD','CALIBRATION'],
+  'CSV Admin':    ['USER'],
+  'Service Acct': [],
+};
+
+// ============================================================
+// AUDIT TRAIL GENERATION
+// ============================================================
+function randDateInRange(startMs, endMs){
+  return new Date(startMs + rng()*(endMs-startMs));
+}
+function fmtISO(d){
+  return d.toISOString().replace('Z','').slice(0,19);
+}
+
+function generateAuditTrail(){
+  const records = [];
+  let sequenceCounters = {}; SYSTEMS.forEach(s => sequenceCounters[s.id] = 1000);
+
+  const start = new Date('2026-03-01T00:00:00').getTime();
+  const end   = new Date('2026-05-15T23:59:59').getTime();
+
+  // 1. Generate baseline records (~450 per system, mostly clean)
+  SYSTEMS.forEach(sys => {
+    for(let i=0; i<480; i++){
+      const ts = randDateInRange(start, end);
+      const hour = ts.getHours();
+      const isOpsHours = hour >= 6 && hour <= 20;
+
+      const user = pick(USERS.filter(u=>u.role !== 'Service Acct'));
+      const ent = pick(ENTITIES);
+      const action = pick(['MODIFY','MODIFY','MODIFY','CREATE','VIEW','VIEW','VIEW','LOGIN','LOGIN','LOGOUT']);
+
+      // baseline reason: 92% valid
+      const reasonValid = rng() < 0.92;
+      const reason = (action==='MODIFY' || action==='DELETE')
+        ? (reasonValid ? pick(REASONS_VALID) : pick(REASONS_VAGUE_OR_EMPTY))
+        : '';
+
+      records.push({
+        record_id: `AT-${sys.id.split('-').pop()}-${sequenceCounters[sys.id]}`,
+        sequence_num: sequenceCounters[sys.id]++,
+        timestamp: fmtISO(ts),
+        timestamp_ms: ts.getTime(),
+        system: sys.id,
+        user_id: user.id,
+        user_role: user.role,
+        action: action,
+        entity_type: ent.type,
+        entity_id: `${ent.type.substr(0,3)}-2026-${Math.floor(rng()*9000+1000)}`,
+        field: pick(ent.fields),
+        old_value: '',
+        new_value: '',
+        reason_for_change: reason,
+        ip_address: pick(IPs_PRIMARY),
+        hostname: pick(HOSTS),
+        session_id: `S-${Math.floor(rng()*99999)}`,
+        batch_id: rng()<0.6 ? `BR-2026-${Math.floor(rng()*900+100)}` : '',
+        batch_status: rng()<0.85 ? 'Open' : 'Closed',
+        flagged: false,
+      });
+    }
+  });
+
+  // ===== PLANT VIOLATIONS =====
+
+  // R-001: Shared account - m.chen logs in from two different IPs within 47 seconds
+  const r1ts = new Date('2026-04-12T14:32:11').getTime();
+  records.push(_makeRec(sequenceCounters, 'QC-LIMS-001', r1ts, 'm.chen','QC Analyst','MODIFY','SAMPLE_RESULT','SAM-2026-4281','Endotoxin (EU/mL)','0.45','0.42','Per QC supervisor approval — see CR-2026-0214','10.42.18.92','QC-WS-103'));
+  records.push(_makeRec(sequenceCounters, 'QC-LIMS-001', r1ts+47000, 'm.chen','QC Analyst','LOGIN','SESSION','SES-883','','','','','10.42.31.07','QC-LAB-LAPTOP-02'));
+  records.push(_makeRec(sequenceCounters, 'QC-LIMS-001', r1ts+62000, 'm.chen','QC Analyst','VIEW','BATCH_RECORD','BR-2026-477','','','','','10.42.31.07','QC-LAB-LAPTOP-02'));
+
+  // Second shared account: r.patel
+  const r1ts2 = new Date('2026-05-03T10:11:08').getTime();
+  records.push(_makeRec(sequenceCounters, 'QC-CDS-001', r1ts2, 'r.patel','QC Analyst','MODIFY','SAMPLE_RESULT','SAM-2026-4419','TOC (ppb)','142','138','Re-test result confirmed — original transcription error','10.42.18.94','QC-WS-105'));
+  records.push(_makeRec(sequenceCounters, 'QC-CDS-001', r1ts2+22000, 'r.patel','QC Analyst','MODIFY','SAMPLE_RESULT','SAM-2026-4420','TOC (ppb)','148','141','Re-test result confirmed — original transcription error','10.42.42.11','QC-LAB-LAPTOP-01'));
+
+  // R-002: Privilege escalation — m.chen (QC Analyst) modifies METHOD (only QC Lead+ allowed)
+  records.push(_makeRec(sequenceCounters, 'QC-LIMS-001', new Date('2026-04-08T09:18:42').getTime(), 'm.chen','QC Analyst','MODIFY','METHOD','MTH-2026-022','Acceptance Criterion','NMT 0.5 EU/mL','NMT 0.6 EU/mL','update','10.42.18.92','QC-WS-103'));
+  records.push(_makeRec(sequenceCounters, 'QC-MES-001', new Date('2026-04-29T16:54:11').getTime(), 'd.nguyen','QC Analyst','MODIFY','BATCH_RECORD','BR-2026-541','Step Completion','In Progress','Completed','','10.42.18.93','QC-WS-104'));
+
+  // R-003: Abnormal time-stamp clustering — 7 modifications by k.osei in <3 seconds
+  const r3ts = new Date('2026-04-22T11:08:34').getTime();
+  for(let i=0; i<7; i++){
+    records.push(_makeRec(sequenceCounters, 'QC-LIMS-001', r3ts + i*380, 'k.osei','QA Reviewer','MODIFY','SAMPLE_RESULT',`SAM-2026-${4500+i}`,'pH','7.2','7.3','update','10.42.21.07','QC-LIMS-CL01'));
+  }
+  // Second cluster — svc-lims doing 12 rapid modifications
+  const r3ts2 = new Date('2026-05-08T03:14:22').getTime();
+  for(let i=0; i<12; i++){
+    records.push(_makeRec(sequenceCounters, 'QC-LIMS-001', r3ts2 + i*220, 'svc-lims','Service Acct','MODIFY','SAMPLE_RESULT',`SAM-2026-${4700+i}`,'Endotoxin (EU/mL)','','','automated reprocess','10.42.21.08','QC-LIMS-CL02'));
+  }
+
+  // R-004: Deletion-after-creation - same user creates and deletes within 24h
+  const r4ts = new Date('2026-04-15T15:42:18').getTime();
+  records.push(_makeRec(sequenceCounters, 'QC-CDS-001', r4ts, 'r.patel','QC Analyst','CREATE','SAMPLE_RESULT','SAM-2026-4612','TOC (ppb)','','167','New result entry','10.42.18.94','QC-WS-105'));
+  records.push(_makeRec(sequenceCounters, 'QC-CDS-001', r4ts+18*3600*1000, 'r.patel','QC Analyst','DELETE','SAMPLE_RESULT','SAM-2026-4612','','','','data entry error','10.42.18.94','QC-WS-105'));
+
+  const r4ts2 = new Date('2026-04-27T22:08:00').getTime();
+  records.push(_makeRec(sequenceCounters, 'QC-LIMS-001', r4ts2, 'a.johnson','QC Analyst','CREATE','SAMPLE_RESULT','SAM-2026-4720','pH','','7.8','New result entry','10.42.18.92','QC-WS-103'));
+  records.push(_makeRec(sequenceCounters, 'QC-LIMS-001', r4ts2+3*3600*1000, 'a.johnson','QC Analyst','DELETE','SAMPLE_RESULT','SAM-2026-4720','','','','-','10.42.18.92','QC-WS-103'));
+
+  const r4ts3 = new Date('2026-05-04T09:01:14').getTime();
+  records.push(_makeRec(sequenceCounters, 'QC-MTOF-001', r4ts3, 's.walsh','QC Lead','CREATE','SAMPLE_RESULT','SAM-2026-4801','Mass Spectrum','','m/z 1428.7','Initial result','10.42.21.07','QC-MTOF-WS'));
+  records.push(_makeRec(sequenceCounters, 'QC-MTOF-001', r4ts3+11*3600*1000, 's.walsh','QC Lead','DELETE','SAMPLE_RESULT','SAM-2026-4801','','','','correction','10.42.21.07','QC-MTOF-WS'));
+
+  // R-005: Sequence gap — insert a record with sequence_num that creates a gap
+  // We'll handle this in the rule itself by injecting a controlled gap below
+  // For now, advance one counter past where it should be
+  sequenceCounters['QC-LIMS-001'] += 47; // creates a deterministic gap
+
+  // R-006: Post-batch edit — modify a closed batch
+  records.push(_makeRec(sequenceCounters, 'QC-MES-001', new Date('2026-05-09T15:11:42').getTime(), 't.jenkins','QA Reviewer','MODIFY','BATCH_RECORD','BR-2026-419','In-Process Result','OK','Within range','Per investigation INV-2026-0102','10.42.21.07','QC-LIMS-CL01', 'BR-2026-419','Closed'));
+  records.push(_makeRec(sequenceCounters, 'QC-LIMS-001', new Date('2026-04-30T10:22:08').getTime(), 'm.chen','QC Analyst','MODIFY','BATCH_RECORD','BR-2026-388','In-Process Result','125 EU','118 EU','adjustment','10.42.18.92','QC-WS-103', 'BR-2026-388','Closed'));
+
+  // R-007: After-hours edits without reason
+  records.push(_makeRec(sequenceCounters, 'QC-LIMS-001', new Date('2026-04-19T23:42:08').getTime(), 'l.bauer','QC Analyst','MODIFY','SAMPLE_RESULT','SAM-2026-4801','Endotoxin (EU/mL)','0.38','0.32','update','10.42.42.11','QC-LAB-LAPTOP-01'));
+  records.push(_makeRec(sequenceCounters, 'QC-CDS-001', new Date('2026-04-26T02:14:19').getTime(), 'r.patel','QC Analyst','MODIFY','SAMPLE_RESULT','SAM-2026-4855','TOC (ppb)','148','139','','10.42.18.94','QC-WS-105'));
+  records.push(_makeRec(sequenceCounters, 'QC-LABX-001', new Date('2026-05-05T01:08:47').getTime(), 'a.johnson','QC Analyst','MODIFY','CALIBRATION','CAL-2026-117','Calibration Value','7.001','7.002','-','10.42.18.92','QC-WS-103'));
+
+  // R-008: System-wide audit trail gap — no records for QC-FTIR-001 between Apr 20 and Apr 24
+  // We'll just ensure (via the seed) that no records fall in that window. The rule looks for >72hr gaps during ops hours.
+  // To make this deterministic, prune any QC-FTIR-001 records that fall in that window
+  const gapStart = new Date('2026-04-20T00:00:00').getTime();
+  const gapEnd   = new Date('2026-04-24T23:59:59').getTime();
+  for(let i = records.length-1; i >= 0; i--){
+    if(records[i].system === 'QC-FTIR-001' && records[i].timestamp_ms >= gapStart && records[i].timestamp_ms <= gapEnd){
+      records.splice(i,1);
+    }
+  }
+
+  // R-009: Original record modification with vague reason (already covered by some R-007 records; add explicit cases)
+  records.push(_makeRec(sequenceCounters, 'QC-KQCL-001', new Date('2026-04-11T13:08:14').getTime(), 'p.reyes','QC Lead','MODIFY','SAMPLE_RESULT','SAM-2026-4422','Endotoxin (EU/mL)','0.51','0.49','','10.42.31.07','QC-LAB-LAPTOP-02'));
+  records.push(_makeRec(sequenceCounters, 'QC-MTOF-001', new Date('2026-04-30T11:55:42').getTime(), 's.walsh','QC Lead','MODIFY','SAMPLE_RESULT','SAM-2026-4499','Mass Spectrum','','m/z 1428.7','correction','10.42.21.07','QC-MTOF-WS'));
+
+  // Sort by timestamp
+  records.sort((a,b)=>a.timestamp_ms-b.timestamp_ms);
+  return records;
+}
+
+function _makeRec(seqCounters, sys, ts_ms, userId, userRole, action, entType, entId, field, oldV, newV, reason, ip, host, batchId, batchStatus){
+  return {
+    record_id: `AT-${sys.split('-').pop()}-${seqCounters[sys]}`,
+    sequence_num: seqCounters[sys]++,
+    timestamp: fmtISO(new Date(ts_ms)),
+    timestamp_ms: ts_ms,
+    system: sys,
+    user_id: userId,
+    user_role: userRole,
+    action: action,
+    entity_type: entType,
+    entity_id: entId,
+    field: field || '',
+    old_value: oldV || '',
+    new_value: newV || '',
+    reason_for_change: reason || '',
+    ip_address: ip,
+    hostname: host,
+    session_id: 'S-' + Math.floor(rng()*99999),
+    batch_id: batchId || '',
+    batch_status: batchStatus || 'Open',
+    flagged: true,
+  };
+}
+
+// ============================================================
+// RULE PACK DEFINITIONS
+// ============================================================
+const RULE_PACKS = {
+  'R-001': {
+    name: 'Shared Account Detection',
+    alcoa: ['Attributable'],
+    severity: 'crit',
+    citation: 'MHRA 2018 §6.2',
+    description: 'Same user_id active from disparate hosts/IPs within a window shorter than typical session re-establishment.',
+    detect: function(records){
+      const findings = [];
+      // Group by user
+      const byUser = {};
+      records.forEach(r => {
+        if(!byUser[r.user_id]) byUser[r.user_id] = [];
+        byUser[r.user_id].push(r);
+      });
+      Object.keys(byUser).forEach(user => {
+        const recs = byUser[user];
+        for(let i = 0; i < recs.length; i++){
+          for(let j = i+1; j < recs.length; j++){
+            const dt = recs[j].timestamp_ms - recs[i].timestamp_ms;
+            if(dt > 90*1000) break; // beyond window
+            if(recs[i].hostname !== recs[j].hostname && recs[i].ip_address !== recs[j].ip_address){
+              findings.push({
+                rule: 'R-001',
+                evidence: [recs[i], recs[j]],
+                summary: `User account <code>${user}</code> performed actions from <strong>two distinct hosts</strong> within ${Math.round(dt/1000)} seconds`,
+              });
+              break; // one finding per pair start
+            }
+          }
+        }
+      });
+      return findings;
+    }
+  },
+  'R-002': {
+    name: 'Unauthorized Privilege Escalation',
+    alcoa: ['Attributable','Accurate'],
+    severity: 'crit',
+    citation: 'MHRA 2018 §6.3',
+    description: 'User executed an action requiring a role they do not hold per the access matrix.',
+    detect: function(records){
+      const findings = [];
+      records.forEach(r => {
+        if(r.action !== 'MODIFY' && r.action !== 'DELETE') return;
+        const allowed = PERMISSIONS[r.user_role] || [];
+        if(!allowed.includes(r.entity_type)){
+          findings.push({
+            rule: 'R-002',
+            evidence: [r],
+            summary: `Role <code>${r.user_role}</code> (user <code>${r.user_id}</code>) performed <strong>${r.action}</strong> on <code>${r.entity_type}</code> — not permitted under access matrix`,
+          });
+        }
+      });
+      return findings;
+    }
+  },
+  'R-003': {
+    name: 'Abnormal Time-Stamp Clustering',
+    alcoa: ['Contemporaneous','Accurate'],
+    severity: 'major',
+    citation: 'MHRA 2018 §6.6',
+    description: 'Sequences of ≥5 MODIFY actions by same user within ≤3 seconds total — strongly suggests bulk/scripted edits.',
+    detect: function(records){
+      const findings = [];
+      const byUser = {};
+      records.forEach(r => {
+        if(r.action !== 'MODIFY') return;
+        if(!byUser[r.user_id]) byUser[r.user_id] = [];
+        byUser[r.user_id].push(r);
+      });
+      Object.keys(byUser).forEach(user => {
+        const recs = byUser[user].sort((a,b)=>a.timestamp_ms-b.timestamp_ms);
+        let i = 0;
+        while(i < recs.length){
+          let j = i;
+          while(j+1 < recs.length && (recs[j+1].timestamp_ms - recs[i].timestamp_ms) <= 4000){
+            j++;
+          }
+          if(j - i >= 4){
+            findings.push({
+              rule: 'R-003',
+              evidence: recs.slice(i, j+1).slice(0,5),
+              summary: `User <code>${user}</code> executed <strong>${j-i+1} MODIFY actions in ${((recs[j].timestamp_ms-recs[i].timestamp_ms)/1000).toFixed(1)}s</strong> — typical bulk/scripted edit signature`,
+              meta: { count: j-i+1 }
+            });
+            i = j+1;
+          } else {
+            i++;
+          }
+        }
+      });
+      return findings;
+    }
+  },
+  'R-004': {
+    name: 'Deletion-After-Creation',
+    alcoa: ['Original','Enduring'],
+    severity: 'crit',
+    citation: 'MHRA 2018 §6.16',
+    description: 'Same user creates an entity then deletes it within 24 hours — pattern most commonly cited in FDA 483 observations.',
+    detect: function(records){
+      const findings = [];
+      const creates = {};
+      records.forEach(r => {
+        if(r.action === 'CREATE'){
+          creates[r.entity_id] = r;
+        } else if(r.action === 'DELETE' && creates[r.entity_id]){
+          const c = creates[r.entity_id];
+          const dt = r.timestamp_ms - c.timestamp_ms;
+          if(c.user_id === r.user_id && dt <= 24*3600*1000){
+            findings.push({
+              rule: 'R-004',
+              evidence: [c, r],
+              summary: `User <code>${r.user_id}</code> created entity <code>${r.entity_id}</code> and <strong>deleted it ${(dt/3600000).toFixed(1)} hours later</strong>`,
+            });
+          }
+        }
+      });
+      return findings;
+    }
+  },
+  'R-005': {
+    name: 'Sequence Gap Detection',
+    alcoa: ['Complete'],
+    severity: 'major',
+    citation: 'MHRA 2018 §3.5',
+    description: 'Discontinuities in audit-trail sequence numbers — indicates records may have been deleted before archival.',
+    detect: function(records){
+      const findings = [];
+      const bySystem = {};
+      records.forEach(r => {
+        if(!bySystem[r.system]) bySystem[r.system] = [];
+        bySystem[r.system].push(r);
+      });
+      Object.keys(bySystem).forEach(sys => {
+        const recs = bySystem[sys].sort((a,b)=>a.sequence_num-b.sequence_num);
+        for(let i = 1; i < recs.length; i++){
+          const gap = recs[i].sequence_num - recs[i-1].sequence_num;
+          if(gap > 1){
+            findings.push({
+              rule: 'R-005',
+              evidence: [recs[i-1], recs[i]],
+              summary: `System <code>${sys}</code> · sequence gap of <strong>${gap-1} records</strong> detected between seq ${recs[i-1].sequence_num} and ${recs[i].sequence_num}`,
+              meta: { gapSize: gap - 1 }
+            });
+          }
+        }
+      });
+      return findings;
+    }
+  },
+  'R-006': {
+    name: 'Post-Batch Edit',
+    alcoa: ['Contemporaneous','Enduring'],
+    severity: 'crit',
+    citation: 'MHRA 2018 §6.6',
+    description: 'MODIFY or DELETE action on a batch record after the batch has been closed.',
+    detect: function(records){
+      const findings = [];
+      records.forEach(r => {
+        if((r.action === 'MODIFY' || r.action === 'DELETE') && r.batch_status === 'Closed' && r.entity_type === 'BATCH_RECORD'){
+          findings.push({
+            rule: 'R-006',
+            evidence: [r],
+            summary: `User <code>${r.user_id}</code> performed <strong>${r.action}</strong> on batch record <code>${r.batch_id}</code> while batch status was <strong>Closed</strong>`,
+          });
+        }
+      });
+      return findings;
+    }
+  },
+  'R-007': {
+    name: 'After-Hours Edit Pattern',
+    alcoa: ['Contemporaneous','Attributable'],
+    severity: 'major',
+    citation: 'MHRA 2018 §6.6',
+    description: 'MODIFY/DELETE actions outside standard operations hours (06:00–20:00) without a documented reason for change.',
+    detect: function(records){
+      const findings = [];
+      records.forEach(r => {
+        if(r.action !== 'MODIFY' && r.action !== 'DELETE') return;
+        const hour = new Date(r.timestamp_ms).getHours();
+        const isOpsHours = hour >= 6 && hour <= 20;
+        const vague = REASONS_VAGUE_OR_EMPTY.includes((r.reason_for_change || '').trim().toLowerCase()) || (r.reason_for_change || '').trim() === '';
+        if(!isOpsHours && vague){
+          findings.push({
+            rule: 'R-007',
+            evidence: [r],
+            summary: `User <code>${r.user_id}</code> performed <strong>${r.action}</strong> at <strong>${r.timestamp.slice(11,16)}</strong> with no/vague reason: "<em>${r.reason_for_change || '(empty)'}</em>"`,
+          });
+        }
+      });
+      return findings;
+    }
+  },
+  'R-008': {
+    name: 'Audit Trail Gap (System-Wide)',
+    alcoa: ['Complete','Enduring'],
+    severity: 'crit',
+    citation: 'MHRA 2018 §3.5',
+    description: 'Continuous gaps >72 hours in audit trail during normal operational periods — may indicate trail was disabled.',
+    detect: function(records){
+      const findings = [];
+      const bySystem = {};
+      records.forEach(r => {
+        if(!bySystem[r.system]) bySystem[r.system] = [];
+        bySystem[r.system].push(r);
+      });
+      Object.keys(bySystem).forEach(sys => {
+        const recs = bySystem[sys].sort((a,b)=>a.timestamp_ms-b.timestamp_ms);
+        for(let i = 1; i < recs.length; i++){
+          const gap = recs[i].timestamp_ms - recs[i-1].timestamp_ms;
+          // 72 hours during what should be ops hours
+          if(gap > 72*3600*1000){
+            const startDay = new Date(recs[i-1].timestamp_ms).getDay();
+            // Only flag if it's not crossing only weekends
+            const days = Math.floor(gap / (24*3600*1000));
+            findings.push({
+              rule: 'R-008',
+              evidence: [recs[i-1], recs[i]],
+              summary: `System <code>${sys}</code> · <strong>${days}-day gap</strong> in audit trail (${recs[i-1].timestamp.slice(0,10)} → ${recs[i].timestamp.slice(0,10)}). No records during normal ops window.`,
+              meta: { gapDays: days }
+            });
+          }
+        }
+      });
+      return findings;
+    }
+  },
+  'R-009': {
+    name: 'Original Record Modification (vague reason)',
+    alcoa: ['Original','Accurate'],
+    severity: 'major',
+    citation: 'MHRA 2018 §6.16',
+    description: 'MODIFY of an original SAMPLE_RESULT or CALIBRATION value with a vague or empty reason-for-change.',
+    detect: function(records){
+      const findings = [];
+      records.forEach(r => {
+        if(r.action !== 'MODIFY') return;
+        if(!['SAMPLE_RESULT','CALIBRATION'].includes(r.entity_type)) return;
+        const reason = (r.reason_for_change || '').trim();
+        const isVague = REASONS_VAGUE_OR_EMPTY.includes(reason.toLowerCase()) || reason === '';
+        if(isVague && r.old_value && r.new_value && r.old_value !== r.new_value){
+          findings.push({
+            rule: 'R-009',
+            evidence: [r],
+            summary: `User <code>${r.user_id}</code> changed ${r.entity_type} <code>${r.entity_id}</code> field "<em>${r.field}</em>" from <code>${r.old_value}</code> to <code>${r.new_value}</code> with reason: "<em>${reason || '(empty)'}</em>"`,
+          });
+        }
+      });
+      return findings;
+    }
+  }
+};
+
+// Remediation suggestions per rule
+const REMEDIATIONS = {
+  'R-001': 'Investigate immediately. Pull AD logon history for the user. Confirm with the user directly. If credential sharing is confirmed: document via deviation, retrain, force password reset, review every action by the user in the affected window for data-integrity impact.',
+  'R-002': 'Suspend the user role temporarily. Review the access matrix and the user provisioning workflow. Document a CAPA addressing how the privilege was granted in error. Verify that no batches dispositioned downstream relied on the unauthorized record.',
+  'R-003': 'Engage the system owner. Determine whether the cluster represents a scripted/bulk operation (require validation under GAMP 5) or human "ghost" activity. If it is a service-account operation, document the workflow and bring it under change control. If human, investigate for data manipulation.',
+  'R-004': 'Trigger a formal deviation per the QMS. Recover the deleted record from system backup or audit trail. Determine why it was deleted. Document under ALCOA+ Original/Enduring. Notify QA for trend analysis if pattern recurs by user.',
+  'R-005': 'Compare audit-trail export against system\'s native sequence counter. If gap is genuine and unexplained, investigate as audit-trail tampering. Verify backup completeness. Document under MHRA §3.5 audit-trail completeness.',
+  'R-006': 'Trigger a formal deviation. Closed-batch modifications break the Contemporaneous principle and may require regulatory notification depending on the change\'s significance. Review the batch disposition rationale. Verify the change went through change control.',
+  'R-007': 'Document the activity. If the user has a valid business reason for after-hours work (manufacturing campaign, time-zone coverage), back-fill the reason-for-change. If not, treat as ALCOA+ Contemporaneous violation and investigate. Update LSOP to require explicit reason for any after-hours action.',
+  'R-008': 'Engage IT and the system owner immediately. Determine if the audit-trail service was disabled, if logs were lost, or if the system was down. Verify retention from backup. If logs were intentionally disabled, this is a critical data-integrity event requiring formal deviation and likely regulatory communication.',
+  'R-009': 'Retroactive remediation: contact the user and request a proper reason-for-change citing the underlying basis (LSOP, deviation, supervisor approval). Lock the record once amended. Update operator training on reason-for-change quality. Trend per user — repeat offenders need targeted retraining.',
+};
+
+// ============================================================
+// SCAN ORCHESTRATION
+// ============================================================
+let CURRENT_RECORDS = [];
+let CURRENT_FINDINGS = [];
+let CURRENT_SCAN_MS = 0;
+
+function runScan(){
+  const tStart = performance.now();
+  CURRENT_RECORDS = generateAuditTrail();
+  CURRENT_FINDINGS = [];
+  let findingCounter = 1;
+  Object.keys(RULE_PACKS).forEach(ruleId => {
+    const rule = RULE_PACKS[ruleId];
+    const results = rule.detect(CURRENT_RECORDS);
+    results.forEach(r => {
+      CURRENT_FINDINGS.push({
+        ...r,
+        id: 'F-' + String(findingCounter++).padStart(4,'0'),
+        severity: rule.severity,
+        rule_name: rule.name,
+        alcoa: rule.alcoa,
+        citation: rule.citation,
+        description: rule.description,
+        remediation: REMEDIATIONS[ruleId],
+        system: r.evidence[0]?.system || '—',
+      });
+    });
+  });
+  // Mark flagged records
+  const flaggedIds = new Set();
+  CURRENT_FINDINGS.forEach(f => f.evidence.forEach(e => flaggedIds.add(e.record_id)));
+  CURRENT_RECORDS.forEach(r => { if(flaggedIds.has(r.record_id)) r.flagged = true; });
+  CURRENT_SCAN_MS = performance.now() - tStart;
+}
+
+// ============================================================
+// RENDERING
+// ============================================================
+let FILTER_SEVERITY = 'all';
+let FILTER_RULE = null;
+let FILTER_SYSTEM = 'all';
+
+function renderRulePacks(){
+  const html = Object.keys(RULE_PACKS).map(ruleId => {
+    const rule = RULE_PACKS[ruleId];
+    const count = CURRENT_FINDINGS.filter(f => f.rule === ruleId).length;
+    const sev = rule.severity;
+    const isActive = FILTER_RULE === ruleId;
+    let countClass = 'zero';
+    if(count > 0) countClass = sev === 'crit' ? 'crit' : sev === 'major' ? 'warn' : 'minor';
+    return `
+      <div class="rule-card ${isActive ? 'active':''}" data-rule="${ruleId}">
+        <div class="rule-id">${ruleId} · ${rule.citation}</div>
+        <div class="rule-name">${rule.name}</div>
+        <div class="alcoa-row">
+          ${rule.alcoa.map(a => `<span class="alcoa-pill">${a}</span>`).join('')}
+        </div>
+        <div class="rule-stats">
+          <span class="badge ${sev}">${sev === 'crit' ? 'Critical' : sev === 'major' ? 'Major' : 'Minor'}</span>
+          <span style="flex:1"></span>
+          <span class="findings-count ${countClass}">${count}</span>
+          <span style="color:var(--ink-muted);font-size:11px">findings</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('rule-grid').innerHTML = html;
+  // attach click handlers
+  document.querySelectorAll('.rule-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const r = card.dataset.rule;
+      FILTER_RULE = FILTER_RULE === r ? null : r;
+      renderRulePacks();
+      renderFindings();
+    });
+  });
+}
+
+function renderSystemFilterChips(){
+  const systemCounts = {};
+  CURRENT_FINDINGS.forEach(f => {
+    systemCounts[f.system] = (systemCounts[f.system] || 0) + 1;
+  });
+  const systems = Object.keys(systemCounts).sort();
+  const allCount = CURRENT_FINDINGS.length;
+  const html = `
+    <button class="chip ${FILTER_SYSTEM==='all'?'active':''}" data-filter="system" data-value="all">All<span class="count">${allCount}</span></button>
+  ` + systems.map(s => `
+    <button class="chip ${FILTER_SYSTEM===s?'active':''}" data-filter="system" data-value="${s}">${s}<span class="count">${systemCounts[s]}</span></button>
+  `).join('');
+  document.getElementById('system-filter-chips').innerHTML = html;
+  document.querySelectorAll('#system-filter-chips .chip').forEach(c => {
+    c.addEventListener('click', () => {
+      FILTER_SYSTEM = c.dataset.value;
+      renderSystemFilterChips();
+      renderFindings();
+    });
+  });
+}
+
+function filteredFindings(){
+  return CURRENT_FINDINGS.filter(f => {
+    if(FILTER_SEVERITY !== 'all' && f.severity !== FILTER_SEVERITY) return false;
+    if(FILTER_RULE && f.rule !== FILTER_RULE) return false;
+    if(FILTER_SYSTEM !== 'all' && f.system !== FILTER_SYSTEM) return false;
+    return true;
+  });
+}
+
+function renderEvidence(evList){
+  return evList.map(e => `
+    <div class="evidence-line">
+      <span class="ts">${e.timestamp || ''}</span>
+      <span class="act">${e.action || ''}</span>
+      <span class="user">${e.user_id || ''}</span>
+      <span class="ip">${e.ip_address || ''} / ${e.hostname || ''}</span>
+      <span class="ref">${e.record_id || ''}</span>
+    </div>
+  `).join('');
+}
+
+function renderFindings(){
+  const filtered = filteredFindings();
+  const title = FILTER_RULE
+    ? `Findings · filtered to ${FILTER_RULE} ${RULE_PACKS[FILTER_RULE].name}`
+    : 'Findings';
+  document.getElementById('findings-title').textContent = title;
+  document.getElementById('findings-meta').textContent =
+    `${filtered.length} of ${CURRENT_FINDINGS.length} findings shown`;
+
+  if(filtered.length === 0){
+    document.getElementById('findings-list').innerHTML = `
+      <div class="empty">
+        <div class="emp-icon">✓</div>
+        <h4>No findings match the current filter</h4>
+        <p>Clear filters or click a different rule pack to broaden the view.</p>
+      </div>
+    `;
+    return;
+  }
+
+  document.getElementById('findings-list').innerHTML = filtered.map(f => {
+    const sevLabel = f.severity === 'crit' ? 'Critical' : f.severity === 'major' ? 'Major' : 'Minor';
+    return `
+      <div class="finding ${f.severity}">
+        <div class="finding-head">
+          <span class="badge ${f.severity}">${sevLabel}</span>
+          <span class="finding-id">${f.id}</span>
+          <span class="finding-rule">${f.rule} · ${f.rule_name}</span>
+          <div class="finding-meta">
+            <span><span class="meta-label">System:</span> <span class="meta-value">${f.system}</span></span>
+            <span><span class="meta-label">ALCOA+:</span> <span class="meta-value">${f.alcoa.join(' · ')}</span></span>
+            <span class="citation">${f.citation}</span>
+          </div>
+        </div>
+        <div class="finding-body">
+          <div class="description">${f.summary}.</div>
+          <div class="evidence">${renderEvidence(f.evidence)}</div>
+          <div class="why-row">
+            <div class="label">Why it matters</div>
+            <div class="content">${f.description}</div>
+          </div>
+          <div class="rem-row">
+            <div class="label">Remediation</div>
+            <div class="content">${f.remediation}</div>
+          </div>
+          <div class="action-row">
+            <button class="primary">Open in QMS</button>
+            <button>Mark as Investigating</button>
+            <button>False Positive</button>
+            <button>Export Evidence</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderSummaryStats(){
+  document.getElementById('stat-records').textContent = CURRENT_RECORDS.length.toLocaleString();
+  document.getElementById('stat-systems').textContent = SYSTEMS.length;
+  const totalFindings = CURRENT_FINDINGS.length;
+  document.getElementById('stat-findings').textContent = totalFindings;
+  const sev = {crit:0, major:0, minor:0};
+  CURRENT_FINDINGS.forEach(f => sev[f.severity]++);
+  document.getElementById('stat-sev-breakdown').innerHTML =
+    `<span style="color:var(--sienna)">${sev.crit} crit</span> · <span style="color:var(--mustard)">${sev.major} maj</span> · <span style="color:var(--teal)">${sev.minor} min</span>`;
+  document.getElementById('stat-duration').textContent = CURRENT_SCAN_MS.toFixed(1) + ' ms';
+}
+
+function renderRawTable(){
+  const sample = CURRENT_RECORDS.slice(0, 80);
+  document.getElementById('raw-total').textContent = CURRENT_RECORDS.length.toLocaleString();
+  document.getElementById('raw-tbody').innerHTML = sample.map(r => {
+    const actClass = 'act-' + r.action.toLowerCase();
+    return `
+      <tr class="${r.flagged ? 'flagged' : ''}">
+        <td class="ridcol">${r.record_id}</td>
+        <td>${r.timestamp}</td>
+        <td>${r.system}</td>
+        <td>${r.user_id}</td>
+        <td>${r.user_role}</td>
+        <td class="${actClass}">${r.action}</td>
+        <td>${r.entity_id}</td>
+        <td>${r.field || '—'}</td>
+        <td>${(r.reason_for_change || '').substring(0, 35) || '—'}</td>
+        <td>${r.ip_address} / ${r.hostname}</td>
+        <td>${r.batch_id || '—'}${r.batch_status === 'Closed' ? ' [Closed]' : ''}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderAll(){
+  renderSummaryStats();
+  renderRulePacks();
+  renderSystemFilterChips();
+  renderFindings();
+  renderRawTable();
+}
+
+// ============================================================
+// EVENT WIRING
+// ============================================================
+document.querySelectorAll('.chip[data-filter="severity"]').forEach(chip => {
+  chip.addEventListener('click', function(){
+    FILTER_SEVERITY = this.dataset.value;
+    document.querySelectorAll('.chip[data-filter="severity"]').forEach(c => c.classList.remove('active'));
+    this.classList.add('active');
+    renderFindings();
+  });
+});
+
+document.getElementById('clear-filters').addEventListener('click', () => {
+  FILTER_SEVERITY = 'all';
+  FILTER_RULE = null;
+  FILTER_SYSTEM = 'all';
+  document.querySelectorAll('.chip[data-filter="severity"]').forEach(c => c.classList.remove('active'));
+  document.querySelector('.chip[data-filter="severity"][data-value="all"]').classList.add('active');
+  renderAll();
+});
+
+document.getElementById('rerun-btn').addEventListener('click', () => {
+  const btn = document.getElementById('rerun-btn');
+  btn.disabled = true;
+  btn.textContent = '⏵ Scanning…';
+  setTimeout(() => {
+    reseed();
+    runScan();
+    renderAll();
+    btn.disabled = false;
+    btn.textContent = '↻ Re-run scan';
+  }, 350);
+});
+
+// Initial run
+runScan();
+renderAll();
+</script>
+
+<script>
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && window.parent !== window) {
+    window.parent.postMessage({ type: 'close-fullscreen' }, '*');
+  }
+});
+</script>
+<!-- broken-img-handler -->
+<script>
+(function(){
+  if(window.__brokenImgHandler)return;
+  window.__brokenImgHandler=true;
+  var MAX=5,DELAYS=[2000,4000,8000,16000,32000];
+  document.addEventListener('error',function(e){
+    var img=e.target;
+    if(!img||img.tagName!=='IMG')return;
+    var liveSrc=img.getAttribute('src');
+    var src=img.dataset.haOriginalSrc||liveSrc;
+    if(!src)return;
+    if(img.dataset.haOriginalSrc&&liveSrc&&liveSrc!==img.dataset.haOriginalSrc&&liveSrc.indexOf('_r=')<0){src=liveSrc;img.dataset.haOriginalSrc=src;img.dataset.haRetryCount='0'}
+    else if(!img.dataset.haOriginalSrc){img.dataset.haOriginalSrc=src}
+    var attempt=parseInt(img.dataset.haRetryCount||'0',10);
+    if(img.dataset.haPhId){var old=document.getElementById(img.dataset.haPhId);if(old)old.remove()}
+    var ph=document.createElement('div');
+    ph.className='ha-img-placeholder'+(attempt>=MAX?' ha-failed':'');
+    ph.id='ha-ph-'+Math.random().toString(36).slice(2,9);
+    var w=img.getAttribute('width');var h=img.getAttribute('height');
+    if(w)ph.style.width=w+(isNaN(Number(w))?'':'px');
+    else if(img.style.width)ph.style.width=img.style.width;
+    else if(img.width>1)ph.style.width=img.width+'px';
+    if(h)ph.style.height=h+(isNaN(Number(h))?'':'px');
+    else if(img.style.height)ph.style.height=img.style.height;
+    else if(img.height>1)ph.style.height=img.height+'px';
+    ph.textContent=attempt>=MAX?'Image unavailable':'Loading image\u2026';
+    img.dataset.haPhId=ph.id;
+    if(img.dataset.haOrigDisplay==null)img.dataset.haOrigDisplay=img.style.display||'';
+    img.style.display='none';
+    img.insertAdjacentElement('afterend',ph);
+    if(attempt<MAX){
+      img.dataset.haRetryCount=String(attempt+1);
+      setTimeout(function(){
+        if(!img.isConnected)return;
+        if(img.dataset.haOriginalSrc!==src)return;
+        if(img.complete&&img.naturalWidth>0)return;
+        var curSrc=img.getAttribute('src');
+        if(curSrc&&curSrc.indexOf(src)!==0)return;
+        var fresh=src+(src.indexOf('?')>=0?'&':'?')+'_r='+(attempt+1)+'_'+Date.now();
+        img.src=fresh;
+      },DELAYS[attempt]);
+    }
+  },true);
+  document.addEventListener('load',function(e){
+    var img=e.target;
+    if(!img||img.tagName!=='IMG')return;
+    if(img.dataset.haPhId){
+      var ph=document.getElementById(img.dataset.haPhId);
+      if(ph)ph.remove();
+      delete img.dataset.haPhId;
+      img.style.display=img.dataset.haOrigDisplay||'';
+      delete img.dataset.haOrigDisplay;
+      delete img.dataset.haOriginalSrc;
+      delete img.dataset.haRetryCount;
+    }
+  },true);
+})();
+</script>
+</body>
+</html>
